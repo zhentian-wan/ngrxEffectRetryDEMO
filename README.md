@@ -2,7 +2,7 @@
 
 Effects lib mainly takes care to async actions and it talks to service to preform http request.
 
-Let's say it there is any connection problem and BE problems, inside service will throw error.
+Let's say if there is any connection problem or BE problems, inside service will throw error.
 
 Then we can handle those error inside effect.
 
@@ -10,7 +10,10 @@ For example:
 
 Service:
 
-To simulate error, inside this mock service, we just count, called more than two time, it returns success, otherwise, error response.
+To simulate error, inside this mock service, we just count number, service get called more than two times, it returns success, otherwise, error response.
+
+Because in effect we will only retry 3 times, so in the end, it will response with success.
+But if you change `this.couter > 4`, more than 3 times, it returns error response.
 ```ts
   addFeed(action): Observable<any> {
     this.counter++;
