@@ -1,28 +1,36 @@
-# EffectStuck
+# ngRxEffectsRetryDEMO
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 1.0.0.
+Effects lib mainly takes care to async actions and it talks to service to preform http request.
 
-## Development server
+Let's say it there is any connection problem and BE problems, inside service will throw error.
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+Then we can handle those error inside effect.
 
-## Code scaffolding
+For example: 
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive/pipe/service/class/module`.
+Service:
 
-## Build
+To simulate error, inside this mock service, we just count, called more than two time, it returns success, otherwise, error response.
+```ts
+  addFeed(action): Observable<any> {
+    this.counter++;
+    console.log('addFeed:', this.counter);
+    if (this.counter > 2) {
+      return Observable.of('SUCCESS');
+    } else {
+      return Observable.throw(new Error('OFFLINE'));
+    }
+  }
+```
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory. Use the `-prod` flag for a production build.
-
-## Running unit tests
-
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
-
-## Running end-to-end tests
-
-Run `ng e2e` to execute the end-to-end tests via [Protractor](http://www.protractortest.org/).
-Before running the tests make sure you are serving the app via `ng serve`.
-
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI README](https://github.com/angular/angular-cli/blob/master/README.md).
+Effect:
+Using `retryWhen` to retry 3 times each delay 1 second, if not success, then throw error.
+```ts
+  @Effect() add$: Observable<any> = this.actions$
+    .ofType('ADD')
+    .switchMap((action) => this.service.addFeed(action))
+    .map(result => ({type: 'SUCCESS'}))
+    .retryWhen(err => err.delay(1000).take(3)
+      .concat(Observable.throw(err)))
+    .catch(err => Observable.of({type: 'ACTION_ERROR'}));
+```
